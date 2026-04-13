@@ -25,13 +25,17 @@ source "$DOTFILES/lib/install-claude.sh"
 source "$DOTFILES/lib/symlink.sh"
 
 set_default_shell() {
-  local zsh_path
+  local zsh_path current
   zsh_path="$(command -v zsh || true)"
   if [[ -z "$zsh_path" ]]; then
     log_warn "zsh not found; skipping chsh"
     return 0
   fi
-  if [[ "${SHELL:-}" == *zsh ]]; then
+  # Check /etc/passwd directly, not $SHELL: in Coder/Codespaces the user's
+  # login shell is often still bash even after a successful chsh, because
+  # the session was launched before the change.
+  current="$(getent passwd "$USER" 2>/dev/null | awk -F: '{print $7}')"
+  if [[ "$current" == "$zsh_path" ]]; then
     log_info "zsh already default shell"
     return 0
   fi
@@ -39,10 +43,13 @@ set_default_shell() {
     log_warn "$zsh_path not in /etc/shells; skipping chsh"
     return 0
   fi
-  if chsh -s "$zsh_path" "$USER" 2>/dev/null; then
+  # Redirect stdin from /dev/null so chsh can't block on a password prompt
+  # (PAM-less chsh hangs indefinitely otherwise on hosts where the coder
+  # user has no password). If it needs auth, we fail fast and log a hint.
+  if chsh -s "$zsh_path" "$USER" </dev/null >/dev/null 2>&1; then
     log_info "default shell set to $zsh_path"
   else
-    log_warn "chsh failed; manually run: chsh -s $zsh_path"
+    log_warn "chsh failed (needs password or PAM restricted); manually run: chsh -s $zsh_path"
   fi
 }
 
@@ -51,6 +58,8 @@ main() {
   install_system_deps
   install_omz
   install_mise_binary
+  prune_stale_links "$DOTFILES/home" "$HOME"
+  prune_stale_links "$DOTFILES/xdg"  "${XDG_CONFIG_HOME:-$HOME/.config}"
   link_tree "$DOTFILES/home" "$HOME"
   link_tree "$DOTFILES/xdg"  "${XDG_CONFIG_HOME:-$HOME/.config}"
   run_mise_install
