@@ -192,11 +192,23 @@ git commit -m "feat: add common.sh with logging, os detection, sudo helper"
 # Install system packages required before shell setup.
 # Must be sourced after lib/common.sh.
 #
-# `gnupg` is included because mise's core:node backend verifies Node
-# release tarball signatures against the Node maintainers' PGP keys via
-# gpg-agent. Ubuntu 24.04 noble does not ship gnupg in its base image,
-# so a fresh Coder workspace would otherwise fail at `mise install
-# node@24` with "gpg exited with non-zero status: exit code 2".
+# Two non-obvious dep groups in here:
+#
+# 1. `gnupg` — mise's core:node backend verifies Node release tarball
+#    signatures against the Node maintainers' PGP keys via gpg-agent.
+#    Ubuntu 24.04 noble does not ship gnupg in its base image, so a
+#    fresh Coder workspace would otherwise fail at `mise install node@24`
+#    with "gpg exited with non-zero status: exit code 2".
+#
+# 2. PostgreSQL source-build deps (bison, flex, libreadline-dev,
+#    libssl-dev, libicu-dev, libxml2-dev, uuid-dev, zlib1g-dev) — mise's
+#    vfox-postgres plugin compiles PostgreSQL from source via
+#    `./configure && make`, which needs bison/flex up front and the
+#    listed -dev packages for headers. Without these, projects that pin
+#    `postgres = "..."` in their .mise.toml fail at the configure step.
+#    For a faster alternative, project repos can use `embedded-postgres`
+#    instead (precompiled binaries), but the dotfiles still install the
+#    build deps so the source-compile path works out of the box.
 
 install_system_deps() {
   local os
@@ -210,14 +222,17 @@ install_system_deps() {
 
 install_system_deps_linux() {
   if has_cmd zsh && has_cmd git && has_cmd curl \
-     && has_cmd unzip && has_cmd gpg; then
+     && has_cmd unzip && has_cmd gpg \
+     && has_cmd bison && has_cmd flex; then
     log_info "system deps already present"
     return 0
   fi
   log_info "installing system deps via apt"
   run_sudo apt-get update
   run_sudo apt-get install -y \
-    zsh git curl unzip ca-certificates build-essential gnupg
+    zsh git curl unzip ca-certificates build-essential gnupg \
+    bison flex libreadline-dev libssl-dev libicu-dev libxml2-dev \
+    uuid-dev zlib1g-dev
 }
 
 install_system_deps_macos() {
@@ -232,21 +247,33 @@ install_system_deps_macos() {
       eval "$(/usr/local/bin/brew shellenv)"
     fi
   fi
-  if has_cmd zsh && has_cmd git && has_cmd curl && has_cmd gpg; then
+  if has_cmd zsh && has_cmd git && has_cmd curl \
+     && has_cmd gpg && has_cmd bison && has_cmd flex; then
     log_info "system deps already present"
     return 0
   fi
   log_info "installing system deps via brew"
-  brew install zsh git curl gnupg
+  # Most postgres source-build deps (readline, openssl, icu4c, libxml2)
+  # are provided by Xcode CLT or system libs on macOS. bison/flex are
+  # the two we need from brew because the system versions are too old.
+  brew install zsh git curl gnupg bison flex
 }
 ```
 
-> **Note:** the `gnupg` install + `has_cmd gpg` guard were added after a
-> real-world failure on a Coder workspace running Ubuntu 24.04 noble.
-> mise's `core:node` backend verifies Node release signatures via
-> gpg-agent, and noble's minimal base image doesn't ship gnupg. The
-> Docker integration test in Task 10 has been updated to use `ubuntu:24.04`
-> instead of `22.04` to surface this class of bug going forward.
+> **Note:** the `gnupg` and postgres-build-deps installs (and the
+> matching `has_cmd gpg`/`bison`/`flex` guards) were added after two
+> real-world failures on a Coder workspace running Ubuntu 24.04 noble:
+>
+> 1. `mise install node@24` failed because mise's core:node backend
+>    verifies Node release signatures via gpg-agent and noble doesn't
+>    ship gnupg in its base.
+> 2. `mise install postgres@18` failed at `checking for bison... no`
+>    because mise's vfox-postgres plugin compiles PostgreSQL from
+>    source and needs the GNU build-tooling deps.
+>
+> The Docker integration test in Task 10 was updated to use `ubuntu:24.04`
+> instead of `22.04` after the first failure, which would have caught
+> both classes of bug had it been the original test base.
 
 - [ ] **Step 2: Lint with shellcheck**
 

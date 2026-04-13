@@ -88,20 +88,34 @@ local).
    choose `SUDO="sudo -n"` if `$EUID != 0` else empty.
 
 2. **System deps** (`lib/install-system.sh`)
-   - Linux: `$SUDO apt-get update && $SUDO apt-get install -y zsh git curl unzip ca-certificates build-essential gnupg`
+   - Linux: `$SUDO apt-get update && $SUDO apt-get install -y zsh git curl unzip ca-certificates build-essential gnupg bison flex libreadline-dev libssl-dev libicu-dev libxml2-dev uuid-dev zlib1g-dev`
    - macOS: install Homebrew via
      `NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-     if missing, then `brew install zsh git curl gnupg`.
-   - Skip cleanly if every required binary (including `gpg`) is already
-     present.
+     if missing, then `brew install zsh git curl gnupg bison flex`
+     (Xcode CLT + system libs already provide readline/openssl/icu/libxml2).
+   - Skip cleanly if every required binary (including `gpg`, `bison`,
+     `flex`) is already present.
    - **Why `gnupg`:** mise's `core:node` backend verifies Node release
      signatures against the Node maintainers' PGP keys before extracting
      the tarball. Without `gpg-agent` available, `mise install node@24`
      fails with `gpg exited with non-zero status: exit code 2`. This
      surfaced on a real Coder workspace running Ubuntu 24.04 noble (which,
      unlike Ubuntu 22.04 jammy, does **not** include `gnupg` in its base
-     image). `has_cmd gpg` is part of the system-deps short-circuit guard
-     so the fix is forced even on hosts that already have zsh/git/curl.
+     image).
+   - **Why the postgres build deps** (bison, flex, libreadline-dev,
+     libssl-dev, libicu-dev, libxml2-dev, uuid-dev, zlib1g-dev): mise's
+     `vfox-postgres` plugin compiles PostgreSQL from source via
+     `./configure && make`. Without `bison`/`flex` and the `-dev` headers,
+     projects that pin `postgres = "..."` in their `.mise.toml` fail at
+     the configure step with `checking for bison... no`. The dotfiles
+     ship the build deps so the source-compile path works out of the
+     box. Project repos that prefer a faster install can pin
+     `embedded-postgres` (precompiled binaries from
+     `zonkyio/embedded-postgres-binaries`, ~30s vs ~5min compile)
+     instead of `postgres` in their own `.mise.toml`.
+   - `has_cmd gpg`, `has_cmd bison`, and `has_cmd flex` are part of the
+     system-deps short-circuit guard so the fix is forced even on hosts
+     that already have zsh/git/curl/unzip.
 
 3. **oh-my-zsh** (`lib/install-zsh.sh`)
    - `RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"`.
