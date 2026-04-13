@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
-# Install system packages required before shell setup (zsh, git, curl, unzip).
+# Install system packages required before shell setup.
 # Must be sourced after lib/common.sh.
+#
+# `gnupg` is included because mise's core:node backend verifies Node
+# release tarball signatures against the Node maintainers' PGP keys via
+# gpg-agent. Ubuntu 24.04 noble does not ship gnupg in its base image,
+# so a fresh Coder workspace would otherwise fail at `mise install
+# node@24` with "gpg exited with non-zero status: exit code 2".
 
 install_system_deps() {
   local os
@@ -13,14 +19,15 @@ install_system_deps() {
 }
 
 install_system_deps_linux() {
-  if has_cmd zsh && has_cmd git && has_cmd curl && has_cmd unzip; then
+  if has_cmd zsh && has_cmd git && has_cmd curl \
+     && has_cmd unzip && has_cmd gpg; then
     log_info "system deps already present"
     return 0
   fi
   log_info "installing system deps via apt"
   run_sudo apt-get update
   run_sudo apt-get install -y \
-    zsh git curl unzip ca-certificates build-essential
+    zsh git curl unzip ca-certificates build-essential gnupg
 }
 
 install_system_deps_macos() {
@@ -35,10 +42,10 @@ install_system_deps_macos() {
       eval "$(/usr/local/bin/brew shellenv)"
     fi
   fi
-  if has_cmd zsh && has_cmd git && has_cmd curl; then
+  if has_cmd zsh && has_cmd git && has_cmd curl && has_cmd gpg; then
     log_info "system deps already present"
     return 0
   fi
   log_info "installing system deps via brew"
-  brew install zsh git curl
+  brew install zsh git curl gnupg
 }
