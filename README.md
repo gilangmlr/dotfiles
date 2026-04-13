@@ -15,14 +15,18 @@ per-project content.
 
 - **zsh** + [oh-my-zsh](https://ohmyz.sh) with `zsh-syntax-highlighting` and
   `zsh-autosuggestions`
-- **[mise](https://mise.jdx.dev)** as the sole tool manager, pinning current
-  stable / Active LTS versions:
+- **[mise](https://mise.jdx.dev)** as the tool manager for language runtimes
+  and CLIs, pinning current stable / Active LTS versions:
   - Node 24 (Active LTS)
   - pnpm 10
   - Python 3.14
   - Go 1.26
   - Ruby 3.4 (precompiled via `jdx/ruby`, no system build deps required)
-  - `gh`, `starship`, `claude` (latest, via mise's default aqua backend)
+  - `gh`, `starship` (latest, via mise's default aqua backend)
+- **[Claude Code](https://docs.claude.com/en/docs/claude-code)** installed
+  via Anthropic's native installer (`curl -fsSL https://claude.ai/install.sh | bash`),
+  which drops a self-updating binary at `~/.local/bin/claude`. The native
+  install path is used instead of mise so the in-app updater works.
 - **[starship](https://starship.rs)** prompt (no Nerd Font required)
 
 ## Install

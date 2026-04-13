@@ -19,6 +19,8 @@ source "$DOTFILES/lib/install-system.sh"
 source "$DOTFILES/lib/install-zsh.sh"
 # shellcheck source=lib/install-mise.sh
 source "$DOTFILES/lib/install-mise.sh"
+# shellcheck source=lib/install-claude.sh
+source "$DOTFILES/lib/install-claude.sh"
 # shellcheck source=lib/symlink.sh
 source "$DOTFILES/lib/symlink.sh"
 
@@ -52,6 +54,7 @@ main() {
   link_tree "$DOTFILES/home" "$HOME"
   link_tree "$DOTFILES/xdg"  "${XDG_CONFIG_HOME:-$HOME/.config}"
   run_mise_install
+  install_claude_native
   set_default_shell
   log_info "done. open a new zsh to pick up config."
 }
