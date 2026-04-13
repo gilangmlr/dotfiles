@@ -1,0 +1,31 @@
+add_newline = true
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$nodejs\
+$python\
+$golang\
+$line_break\
+$character"""
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol   = "[❯](bold red)"
+
+[directory]
+truncation_length = 3
+truncate_to_repo  = true
+
+[git_branch]
+symbol = "on "
+
+[nodejs]
+symbol = "node "
+
+[python]
+symbol = "py "
+
+[golang]
+symbol = "go "

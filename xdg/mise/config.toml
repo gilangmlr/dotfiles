@@ -1,0 +1,8 @@
+[tools]
+node = "24"
+pnpm = "10"
+python = "3.14"
+go = "1.26"
+gh = "latest"
+starship = "latest"
+claude = "latest"
