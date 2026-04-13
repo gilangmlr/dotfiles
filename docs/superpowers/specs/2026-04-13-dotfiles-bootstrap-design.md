@@ -88,11 +88,20 @@ local).
    choose `SUDO="sudo -n"` if `$EUID != 0` else empty.
 
 2. **System deps** (`lib/install-system.sh`)
-   - Linux: `$SUDO apt-get update && $SUDO apt-get install -y zsh git curl unzip ca-certificates build-essential`
+   - Linux: `$SUDO apt-get update && $SUDO apt-get install -y zsh git curl unzip ca-certificates build-essential gnupg`
    - macOS: install Homebrew via
      `NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-     if missing, then `brew install zsh git curl`.
-   - Skip cleanly if every required binary is already present.
+     if missing, then `brew install zsh git curl gnupg`.
+   - Skip cleanly if every required binary (including `gpg`) is already
+     present.
+   - **Why `gnupg`:** mise's `core:node` backend verifies Node release
+     signatures against the Node maintainers' PGP keys before extracting
+     the tarball. Without `gpg-agent` available, `mise install node@24`
+     fails with `gpg exited with non-zero status: exit code 2`. This
+     surfaced on a real Coder workspace running Ubuntu 24.04 noble (which,
+     unlike Ubuntu 22.04 jammy, does **not** include `gnupg` in its base
+     image). `has_cmd gpg` is part of the system-deps short-circuit guard
+     so the fix is forced even on hosts that already have zsh/git/curl.
 
 3. **oh-my-zsh** (`lib/install-zsh.sh`)
    - `RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"`.
@@ -280,10 +289,12 @@ Re-running `install.sh` on a provisioned workspace must be a silent no-op:
 End-to-end testing plan:
 
 1. **Linux clean-room via Docker** (primary test path — mirrors fresh
-   Coder/Codespaces/devcontainer semantics):
+   Coder/Codespaces/devcontainer semantics). Use `ubuntu:24.04` (noble),
+   not 22.04 — noble has a deliberately minimal base image (no `gnupg`,
+   no `unzip`) that catches missing-dep bugs that older bases mask:
 
    ```
-   docker run --rm -it ubuntu:22.04 bash
+   docker run --rm -it ubuntu:24.04 bash
    apt-get update && apt-get install -y sudo curl git
    useradd -m -s /bin/bash test
    echo "test ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers

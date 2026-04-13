@@ -189,8 +189,14 @@ git commit -m "feat: add common.sh with logging, os detection, sudo helper"
 
 ```bash
 #!/usr/bin/env bash
-# Install system packages required before shell setup (zsh, git, curl, unzip).
+# Install system packages required before shell setup.
 # Must be sourced after lib/common.sh.
+#
+# `gnupg` is included because mise's core:node backend verifies Node
+# release tarball signatures against the Node maintainers' PGP keys via
+# gpg-agent. Ubuntu 24.04 noble does not ship gnupg in its base image,
+# so a fresh Coder workspace would otherwise fail at `mise install
+# node@24` with "gpg exited with non-zero status: exit code 2".
 
 install_system_deps() {
   local os
@@ -203,14 +209,15 @@ install_system_deps() {
 }
 
 install_system_deps_linux() {
-  if has_cmd zsh && has_cmd git && has_cmd curl && has_cmd unzip; then
+  if has_cmd zsh && has_cmd git && has_cmd curl \
+     && has_cmd unzip && has_cmd gpg; then
     log_info "system deps already present"
     return 0
   fi
   log_info "installing system deps via apt"
   run_sudo apt-get update
   run_sudo apt-get install -y \
-    zsh git curl unzip ca-certificates build-essential
+    zsh git curl unzip ca-certificates build-essential gnupg
 }
 
 install_system_deps_macos() {
@@ -225,14 +232,21 @@ install_system_deps_macos() {
       eval "$(/usr/local/bin/brew shellenv)"
     fi
   fi
-  if has_cmd zsh && has_cmd git && has_cmd curl; then
+  if has_cmd zsh && has_cmd git && has_cmd curl && has_cmd gpg; then
     log_info "system deps already present"
     return 0
   fi
   log_info "installing system deps via brew"
-  brew install zsh git curl
+  brew install zsh git curl gnupg
 }
 ```
+
+> **Note:** the `gnupg` install + `has_cmd gpg` guard were added after a
+> real-world failure on a Coder workspace running Ubuntu 24.04 noble.
+> mise's `core:node` backend verifies Node release signatures via
+> gpg-agent, and noble's minimal base image doesn't ship gnupg. The
+> Docker integration test in Task 10 has been updated to use `ubuntu:24.04`
+> instead of `22.04` to surface this class of bug going forward.
 
 - [ ] **Step 2: Lint with shellcheck**
 
@@ -987,10 +1001,16 @@ This task has no code to commit. It verifies the whole system works on a clean U
 
 - [ ] **Step 1: Launch a clean container with the repo mounted**
 
+Use `ubuntu:24.04` (noble), not 22.04 — noble has a deliberately minimal
+base image (no `gnupg`, no `unzip`) that catches missing-dep bugs that
+older bases mask. (The `gnupg` fix in Task 2 was originally surfaced by
+a real Coder workspace on noble that this test, when it ran on 22.04,
+had failed to catch.)
+
 ```bash
 docker run --rm -it \
   -v ~/dotfiles:/mnt/dotfiles:ro \
-  ubuntu:22.04 bash
+  ubuntu:24.04 bash
 ```
 
 Inside the container:
