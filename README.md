@@ -21,6 +21,7 @@ per-project content.
   - pnpm 10
   - Python 3.14
   - Go 1.26
+  - Ruby 3.4 (precompiled via `jdx/ruby`, no system build deps required)
   - `gh`, `starship`, `claude` (latest, via mise's default aqua backend)
 - **[starship](https://starship.rs)** prompt (no Nerd Font required)
 
