@@ -26,18 +26,22 @@ install_omz() {
   fi
 
   local custom="${ZSH_CUSTOM:-$zsh_dir/custom}"
-  install_omz_plugin \
+  install_omz_extra \
     https://github.com/zsh-users/zsh-syntax-highlighting.git \
     "$custom/plugins/zsh-syntax-highlighting"
-  install_omz_plugin \
+  install_omz_extra \
     https://github.com/zsh-users/zsh-autosuggestions.git \
     "$custom/plugins/zsh-autosuggestions"
+  install_omz_extra \
+    https://github.com/romkatv/powerlevel10k.git \
+    "$custom/themes/powerlevel10k"
 }
 
-install_omz_plugin() {
+# Generic shallow-clone helper for omz plugins and themes.
+install_omz_extra() {
   local url="$1" dest="$2"
   if [[ -d "$dest" ]]; then
-    log_info "plugin already present: $(basename "$dest")"
+    log_info "omz extra already present: $(basename "$dest")"
     return 0
   fi
   log_info "cloning $(basename "$dest")"

@@ -22,12 +22,15 @@ per-project content.
   - Python 3.14
   - Go 1.26
   - Ruby 3.4 (precompiled via `jdx/ruby`, no system build deps required)
-  - `gh`, `starship` (latest, via mise's default aqua backend)
+  - `gh` (latest, via mise's default aqua backend)
 - **[Claude Code](https://docs.claude.com/en/docs/claude-code)** installed
   via Anthropic's native installer (`curl -fsSL https://claude.ai/install.sh | bash`),
   which drops a self-updating binary at `~/.local/bin/claude`. The native
   install path is used instead of mise so the in-app updater works.
-- **[starship](https://starship.rs)** prompt (no Nerd Font required)
+- **[powerlevel10k](https://github.com/romkatv/powerlevel10k)** prompt
+  (lean preset, Nerd Font v3 required) installed as an oh-my-zsh custom
+  theme. Instant prompt is enabled — paints a cached prompt before zsh
+  finishes sourcing.
 
 ## Install
 

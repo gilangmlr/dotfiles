@@ -5,7 +5,6 @@ python = "3.14"
 go = "1.26"
 ruby = "3.4"
 gh = "latest"
-starship = "latest"
 
 [settings]
 # Download precompiled Ruby from jdx/ruby instead of compiling from
