@@ -33,7 +33,8 @@ install_system_deps() {
 install_system_deps_linux() {
   if has_cmd zsh && has_cmd git && has_cmd curl \
      && has_cmd unzip && has_cmd gpg \
-     && has_cmd bison && has_cmd flex; then
+     && has_cmd bison && has_cmd flex \
+     && has_cmd tmux; then
     log_info "system deps already present"
     return 0
   fi
@@ -42,7 +43,7 @@ install_system_deps_linux() {
   run_sudo apt-get install -y \
     zsh git curl unzip ca-certificates build-essential gnupg \
     bison flex libreadline-dev libssl-dev libicu-dev libxml2-dev \
-    uuid-dev zlib1g-dev
+    uuid-dev zlib1g-dev tmux
 }
 
 install_system_deps_macos() {
@@ -58,7 +59,8 @@ install_system_deps_macos() {
     fi
   fi
   if has_cmd zsh && has_cmd git && has_cmd curl \
-     && has_cmd gpg && has_cmd bison && has_cmd flex; then
+     && has_cmd gpg && has_cmd bison && has_cmd flex \
+     && has_cmd tmux; then
     log_info "system deps already present"
     return 0
   fi
@@ -66,5 +68,5 @@ install_system_deps_macos() {
   # Most postgres source-build deps (readline, openssl, icu4c, libxml2)
   # are provided by Xcode CLT or system libs on macOS. bison/flex are
   # the two we need from brew because the system versions are too old.
-  brew install zsh git curl gnupg bison flex
+  brew install zsh git curl gnupg bison flex tmux
 }

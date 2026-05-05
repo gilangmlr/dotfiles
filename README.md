@@ -31,6 +31,11 @@ per-project content.
   (lean preset, Nerd Font v3 required) installed as an oh-my-zsh custom
   theme. Instant prompt is enabled — paints a cached prompt before zsh
   finishes sourcing.
+- **tmux** with a mouse-first config (`home/.tmux.conf`): click to focus,
+  drag borders to resize, scroll wheel for history, drag-select to copy
+  straight to your laptop's clipboard via OSC 52 (works over SSH / Coder /
+  Codespaces with no `xclip` needed), right-click to paste. `tm` aliases
+  to `tmux new-session -A -s main` for one-shot attach-or-create.
 
 ## Install
 
